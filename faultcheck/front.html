@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Анализ оборудования</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        :root {
+            --bg: #f4f6f9;
+            --surface: #ffffff;
+            --border: #e5e8ee;
+            --text: #1a2233;
+            --text-muted: #6b7280;
+            --accent: #2e5bff;
+            --error: #dc2626;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 32px 20px;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 600px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            box-shadow: 0 4px 24px -8px rgba(26, 34, 51, 0.08);
+            overflow: hidden;
+        }
+
+        .header {
+            padding: 28px 32px 24px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        h1 {
+            font-size: 19px;
+            font-weight: 700;
+            letter-spacing: -0.01em;
+            margin-bottom: 8px;
+        }
+
+        .subtitle {
+            font-size: 13.5px;
+            color: var(--text-muted);
+            line-height: 1.5;
+        }
+
+        form {
+            padding: 28px 32px 32px;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 18px;
+        }
+
+        .field {
+            display: flex;
+            flex-direction: column;
+            gap: 7px;
+        }
+
+        .field.full {
+            grid-column: 1 / -1;
+        }
+
+        label {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text);
+            display: flex;
+            align-items: baseline;
+            gap: 6px;
+        }
+
+        .unit {
+            font-size: 11.5px;
+            font-weight: 500;
+            color: var(--text-muted);
+        }
+
+        input,
+        select {
+            width: 100%;
+            padding: 11px 14px;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            font-size: 14px;
+            font-family: inherit;
+            font-weight: 500;
+            color: var(--text);
+            background: var(--surface);
+            outline: none;
+            transition: border-color 0.15s, box-shadow 0.15s;
+            appearance: none;
+            -webkit-appearance: none;
+        }
+
+        select {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 14px center;
+            padding-right: 38px;
+            cursor: pointer;
+        }
+
+        input:hover,
+        select:hover {
+            border-color: #cdd3dd;
+        }
+
+        input:focus,
+        select:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(46, 91, 255, 0.12);
+        }
+
+        input::-webkit-outer-spin-button,
+        input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
+        input[type=number] {
+            -moz-appearance: textfield;
+        }
+
+        .field-desc {
+            font-size: 11.5px;
+            color: var(--text-muted);
+            line-height: 1.4;
+        }
+
+        .submit-btn {
+            width: 100%;
+            padding: 13px 16px;
+            margin-top: 26px;
+            border: none;
+            border-radius: 10px;
+            font-family: inherit;
+            font-size: 14.5px;
+            font-weight: 600;
+            color: #fff;
+            background: var(--accent);
+            cursor: pointer;
+            transition: background 0.15s, transform 0.1s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .submit-btn:hover:not(:disabled) {
+            background: #1e47d6;
+        }
+
+        .submit-btn:active:not(:disabled) {
+            transform: scale(0.99);
+        }
+
+        .submit-btn:disabled {
+            opacity: 0.65;
+            cursor: not-allowed;
+        }
+
+        .spinner {
+            display: none;
+            width: 15px;
+            height: 15px;
+            border: 2px solid rgba(255, 255, 255, 0.35);
+            border-top-color: #fff;
+            border-radius: 50%;
+            animation: spin 0.7s linear infinite;
+        }
+
+        .submit-btn.loading .spinner {
+            display: block;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .result {
+            margin: 0 32px 32px;
+            padding: 24px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            text-align: center;
+            animation: fadeIn 0.35s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(6px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Уровни риска */
+        .result.level-low {
+            background: #ecfdf5;
+            border-color: rgba(22, 163, 74, 0.3);
+        }
+
+        .result.level-low .result-value {
+            color: #16a34a;
+        }
+
+        .result.level-medium {
+            background: #fefce8;
+            border-color: rgba(202, 138, 4, 0.3);
+        }
+
+        .result.level-medium .result-value {
+            color: #ca8a04;
+        }
+
+        .result.level-high {
+            background: #fff7ed;
+            border-color: rgba(234, 88, 12, 0.3);
+        }
+
+        .result.level-high .result-value {
+            color: #ea580c;
+        }
+
+        .result.level-critical {
+            background: #fef2f2;
+            border-color: rgba(220, 38, 38, 0.3);
+        }
+
+        .result.level-critical .result-value {
+            color: #dc2626;
+        }
+
+        .result.error {
+            background: #fef2f2;
+            border-color: rgba(220, 38, 38, 0.3);
+        }
+
+        .result-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+        }
+
+        .result-value {
+            font-size: 44px;
+            font-weight: 700;
+            letter-spacing: -0.03em;
+            line-height: 1;
+            margin-bottom: 8px;
+        }
+
+        .result.error .result-value {
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--error);
+            line-height: 1.5;
+        }
+
+        .result-hint {
+            font-size: 13px;
+            color: var(--text-muted);
+            line-height: 1.5;
+        }
+
+        /* Шкала */
+        .scale {
+            margin-top: 18px;
+            display: flex;
+            gap: 4px;
+            border-radius: 6px;
+            overflow: hidden;
+        }
+
+        .scale-segment {
+            flex: 1;
+            height: 6px;
+            background: #e5e8ee;
+            transition: background 0.3s;
+        }
+
+        .scale-segment.active {
+            background: currentColor;
+        }
+
+        .scale-legend {
+            margin-top: 10px;
+            display: flex;
+            justify-content: space-between;
+            font-size: 10.5px;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        @media (max-width: 560px) {
+            .header {
+                padding: 24px 22px 20px;
+            }
+
+            form {
+                padding: 22px;
+            }
+
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .result {
+                margin: 0 22px 22px;
+            }
+
+            .result-value {
+                font-size: 36px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Анализ оборудования</h1>
+            <p class="subtitle">
+                Заполните данные полученные от датчика оборудования, чтобы оценить вероятность отказа.
+            </p>
+        </div>
+
+        <form id="analyzeForm">
+            <div class="form-grid">
+                <div class="field full">
+                    <label for="type">Качество продукта</label>
+                    <select id="type" name="type" required>
+                        <option value="0">L — низкое</option>
+                        <option value="1">M — среднее</option>
+                        <option value="2">H — высокое</option>
+                    </select>
+                </div>
+
+                <div class="field">
+                    <label for="air_temperature_k">Температура воздуха <span class="unit">K</span></label>
+                    <input type="number" step="any" id="air_temperature_k" name="air_temperature_k" value="298.1"
+                        required>
+                </div>
+
+                <div class="field">
+                    <label for="process_temperature_k">Температура процесса <span class="unit">K</span></label>
+                    <input type="number" step="any" id="process_temperature_k" name="process_temperature_k"
+                        value="308.6" required>
+                </div>
+
+                <div class="field">
+                    <label for="rotational_speed_rpm">Скорость вращения <span class="unit">об./мин.</span></label>
+                    <input type="number" id="rotational_speed_rpm" name="rotational_speed_rpm" value="1551" required>
+                </div>
+
+                <div class="field">
+                    <label for="torque_nm">Крутящий момент <span class="unit">Н·м</span></label>
+                    <input type="number" step="any" id="torque_nm" name="torque_nm" value="42.8" required>
+                </div>
+
+                <div class="field full">
+                    <label for="tool_wear_min">Износ инструмента <span class="unit">мин.</span></label>
+                    <input type="number" id="tool_wear_min" name="tool_wear_min" value="0" required>
+                </div>
+            </div>
+
+            <button type="submit" class="submit-btn" id="submitBtn">
+                <span class="spinner"></span>
+                <span class="btn-text">Рассчитать вероятность отказа оборудования</span>
+            </button>
+        </form>
+
+        <div id="result" style="display: none;"></div>
+    </div>
+
+    <script>
+        const form = document.getElementById('analyzeForm');
+        const resultDiv = document.getElementById('result');
+        const submitBtn = document.getElementById('submitBtn');
+        const btnText = submitBtn.querySelector('.btn-text');
+
+        const API_URL = 'http://127.0.0.1:8123/analyze';
+        const BTN_LABEL = 'Рассчитать вероятность отказа оборудования';
+
+        // Определяем уровень риска по проценту
+        function getLevel(percent) {
+            if (percent < 25) {
+                return {
+                    key: 'low',
+                    hint: 'Оборудование работает в штатном режиме.',
+                };
+            }
+            if (percent < 50) {
+                return {
+                    key: 'medium',
+                    hint: 'Незначительные отклонения. Рекомендуется наблюдение.',
+                };
+            }
+            if (percent < 75) {
+                return {
+                    key: 'high',
+                    hint: 'Повышенный износ. Стоит запланировать обслуживание.',
+                };
+            }
+            return {
+                key: 'critical',
+                hint: 'Высокая вероятность отказа. Требуется срочное обслуживание.',
+            };
+        }
+
+        // Какой сегмент шкалы горит (0..3)
+        function getSegment(percent) {
+            if (percent < 25) return 0;
+            if (percent < 50) return 1;
+            if (percent < 75) return 2;
+            return 3;
+        }
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const params = new URLSearchParams(new FormData(form));
+
+            submitBtn.disabled = true;
+            submitBtn.classList.add('loading');
+            btnText.textContent = 'Расчёт...';
+            resultDiv.style.display = 'none';
+
+            try {
+                const response = await fetch(`${API_URL}?${params.toString()}`);
+                if (!response.ok) throw new Error('Не удалось получить ответ от сервиса.');
+
+                const data = await response.json();
+                const num = typeof data === 'number' ? data : parseFloat(data);
+                if (isNaN(num)) throw new Error('Некорректный ответ сервиса.');
+
+                const percent = num * 100;
+                const level = getLevel(percent);
+                const activeSegment = getSegment(percent);
+
+                const segments = [0, 1, 2, 3].map(i =>
+                    `<div class="scale-segment ${i === activeSegment ? 'active' : ''}"></div>`
+                ).join('');
+
+                resultDiv.className = `result level-${level.key}`;
+                resultDiv.innerHTML = `
+                    <div class="result-title">Вероятность отказа</div>
+                    <div class="result-value">${percent.toFixed(1)}%</div>
+                    <div class="result-hint">${level.hint}</div>
+                    <div class="scale">${segments}</div>
+                    <div class="scale-legend">
+                        <span>0%</span>
+                        <span>25%</span>
+                        <span>50%</span>
+                        <span>75%</span>
+                        <span>100%</span>
+                    </div>
+                `;
+                resultDiv.style.display = 'block';
+            } catch (err) {
+                resultDiv.className = 'result error';
+                resultDiv.innerHTML = `
+                    <div class="result-title">Ошибка</div>
+                    <div class="result-value">${err.message}</div>
+                `;
+                resultDiv.style.display = 'block';
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.classList.remove('loading');
+                btnText.textContent = BTN_LABEL;
+            }
+        });
+    </script>
+</body>
+
+</html>
