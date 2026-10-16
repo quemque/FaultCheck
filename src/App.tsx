@@ -1,4 +1,4 @@
-import { useState, useRef, type FormEvent, type MouseEvent } from 'react'
+import { useState, type FormEvent, type MouseEvent } from 'react'
 import { Loader2, Shuffle } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
@@ -18,116 +18,33 @@ import {
    SelectTrigger,
    SelectValue,
 } from '@/components/ui/select'
-import { ErrorResult, RiskResult } from '@/components/RiskResult'
-import { analyze } from '@/lib/api'
-import { randomSample } from './lib/samples'
+import { RiskResult } from '@/components/RiskResult'
+import { randomSample } from '@/lib/samples'
+import { ErrorResult } from './components/ui/Error'
 
-const FIELDS = [
-   {
-      name: 'air_temperature_k',
-      label: 'Температура воздуха',
-      en: 'Air temperature',
-      unit: 'K',
-      step: 'any',
-   },
-   {
-      name: 'process_temperature_k',
-      label: 'Температура процесса',
-      en: 'Process temperature',
-      unit: 'K',
-      step: 'any',
-   },
-   {
-      name: 'rotational_speed_rpm',
-      label: 'Скорость вращения',
-      en: 'Rotational speed',
-      unit: 'об./мин.',
-      step: '1',
-   },
-   {
-      name: 'torque_nm',
-      label: 'Крутящий момент',
-      en: 'Torque',
-      unit: 'Н·м',
-      step: 'any',
-   },
-   {
-      name: 'tool_wear_min',
-      label: 'Износ инструмента',
-      en: 'Tool wear',
-      unit: 'мин.',
-      step: '1',
-      full: true,
-   },
-] as const
+import { FIELDS, QUALITY_OPTIONS } from './consts/const'
+import { useAnalysis } from './hooks/useAnalysis'
+import type { Values } from './types'
+import { INITIAL_VALUES } from './consts/const'
 
-const INITIAL: Record<string, string> = {
-   type: '0',
-   air_temperature_k: '298.1',
-   process_temperature_k: '308.6',
-   rotational_speed_rpm: '1551',
-   torque_nm: '42.8',
-   tool_wear_min: '0',
-}
-
-type Result =
-   | { kind: 'ok'; probability: number }
-   | { kind: 'error'; message: string }
-   | null
-
-const En = ({ children }: { children: string }) => (
+const Hint = ({ children }: { children: string }) => (
    <p className="-mt-1 text-xs text-muted-foreground">{children}</p>
 )
 
 export default function App() {
-   const [values, setValues] = useState(INITIAL)
-   const [loading, setLoading] = useState(false)
-   const [result, setResult] = useState<Result>(null)
+   const [values, setValues] = useState<Values>(INITIAL_VALUES)
+   const { loading, result, resultRef, run } = useAnalysis()
 
-   // Реф на блок с результатом, чтобы скроллить к нему, а не наверх
-   const resultRef = useRef<HTMLDivElement>(null)
+   const setValue = (name: string, value: string) =>
+      setValues((prev) => ({ ...prev, [name]: value }))
 
-   const set = (name: string, value: string) =>
-      setValues((v) => ({ ...v, [name]: value }))
-
-   async function run(v: Record<string, string>) {
-      setLoading(true)
-      // ВАЖНО: не вызываем setResult(null), чтобы блок не схлопывался
-      // и страница не подпрыгивала вверх из-за изменения высоты
-      try {
-         const probability = await analyze(v)
-         setResult({ kind: 'ok', probability })
-
-         // Мягко показываем результат в зоне видимости, если он ниже экрана
-         setTimeout(() => {
-            resultRef.current?.scrollIntoView({
-               behavior: 'smooth',
-               block: 'nearest',
-            })
-         }, 50)
-      } catch (err) {
-         setResult({
-            kind: 'error',
-            message: err instanceof Error ? err.message : 'Неизвестная ошибка.',
-         })
-      } finally {
-         setLoading(false)
-      }
-   }
-
-   function onSubmit(e: FormEvent) {
-      e.preventDefault()
+   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+      event.preventDefault()
       run(values)
    }
 
-   function onRandom(e: MouseEvent<HTMLButtonElement>) {
-      e.preventDefault() // предотвращаем скачок фокуса браузера
-
-      // Снимаем фокус с текущих элементов, чтобы браузер не пытался проскроллить к ним
-      if (document.activeElement instanceof HTMLElement) {
-         document.activeElement.blur()
-      }
-
+   const handleRandom = (event: MouseEvent<HTMLButtonElement>) => {
+      event.currentTarget.blur()
       const sample = randomSample()
       setValues(sample)
       run(sample)
@@ -150,52 +67,50 @@ export default function App() {
             </CardHeader>
 
             <CardContent className="space-y-6 pt-6">
-               <form onSubmit={onSubmit} className="space-y-6">
+               <form onSubmit={handleSubmit} className="space-y-6">
                   <div className="grid grid-cols-1 gap-[18px] sm:grid-cols-2">
                      <div className="flex flex-col gap-2 sm:col-span-2">
                         <Label htmlFor="type">Качество продукта</Label>
-                        <En>Product quality</En>
+                        <Hint>Product quality</Hint>
                         <Select
                            value={values.type}
-                           onValueChange={(v) => set('type', v)}
+                           onValueChange={(value) => setValue('type', value)}
                         >
                            <SelectTrigger id="type" className="w-full">
                               <SelectValue />
                            </SelectTrigger>
                            <SelectContent position="popper" sideOffset={4}>
-                              <SelectItem value="0">
-                                 L — низкое / low
-                              </SelectItem>
-                              <SelectItem value="1">
-                                 M — среднее / medium
-                              </SelectItem>
-                              <SelectItem value="2">
-                                 H — высокое / high
-                              </SelectItem>
+                              {QUALITY_OPTIONS.map(({ value, label }) => (
+                                 <SelectItem key={value} value={value}>
+                                    {label}
+                                 </SelectItem>
+                              ))}
                            </SelectContent>
                         </Select>
                      </div>
 
-                     {FIELDS.map((f) => (
+                     {FIELDS.map((field) => (
                         <div
-                           key={f.name}
-                           className={`flex flex-col gap-2 ${'full' in f ? 'sm:col-span-2' : ''}`}
+                           key={field.name}
+                           className={`flex flex-col gap-2 ${'full' in field ? 'sm:col-span-2' : ''}`}
                         >
-                           <Label htmlFor={f.name}>
-                              {f.label}{' '}
+                           <Label htmlFor={field.name}>
+                              {field.label}{' '}
                               <span className="text-[11.5px] font-medium text-muted-foreground">
-                                 ({f.unit})
+                                 ({field.unit})
                               </span>
                            </Label>
-                           <En>{f.en}</En>
+                           <Hint>{field.en}</Hint>
                            <Input
-                              id={f.name}
-                              name={f.name}
+                              id={field.name}
+                              name={field.name}
                               type="number"
-                              step={f.step}
+                              step={field.step}
                               required
-                              value={values[f.name]}
-                              onChange={(e) => set(f.name, e.target.value)}
+                              value={values[field.name]}
+                              onChange={(event) =>
+                                 setValue(field.name, event.target.value)
+                              }
                            />
                         </div>
                      ))}
@@ -221,7 +136,7 @@ export default function App() {
                         variant="outline"
                         size="lg"
                         disabled={loading}
-                        onClick={onRandom}
+                        onClick={handleRandom}
                         className="shrink-0"
                      >
                         <Shuffle className="mr-2 h-4 w-4" />
@@ -230,7 +145,6 @@ export default function App() {
                   </div>
                </form>
 
-               {/* Контейнер результата с ref для удержания позиции */}
                <div ref={resultRef} className="scroll-mt-6">
                   {result?.kind === 'ok' && (
                      <RiskResult probability={result.probability} />
