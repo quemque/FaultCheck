@@ -1,0 +1,30 @@
+{
+  "features": [
+    "type",
+    "air_temperature_k",
+    "process_temperature_k",
+    "rotational_speed_rpm",
+    "torque_nm",
+    "tool_wear_min",
+    "temp_diff",
+    "power_w",
+    "strain",
+    "strain_ratio"
+  ],
+  "thresholds": {
+    "xgb": {
+      "machine_failure": 0.8456424474716187,
+      "twf": 0.023664172738790512,
+      "hdf": 0.8747971057891846,
+      "pwf": 0.512643039226532,
+      "osf": 0.7353847622871399
+    },
+    "tree": {
+      "machine_failure": 0.9555006180469716,
+      "twf": 0.9483926408596016,
+      "hdf": 1.0,
+      "pwf": 1.0,
+      "osf": 1.0
+    }
+  }
+}
