@@ -19,12 +19,13 @@ import {
    SelectValue,
 } from '@/components/ui/select'
 import { RiskResult } from '@/components/RiskResult'
+import { cn } from '@/lib/utils'
 import { randomSample } from '@/lib/samples'
 import { ErrorResult } from './components/ui/Error'
 
-import { FIELDS, QUALITY_OPTIONS } from './consts/const'
+import { FIELDS, MODEL_OPTIONS, QUALITY_OPTIONS } from './consts/const'
 import { useAnalysis } from './hooks/useAnalysis'
-import type { Values } from './types'
+import type { ModelKind, Values } from './types'
 import { INITIAL_VALUES } from './consts/const'
 
 const Hint = ({ children }: { children: string }) => (
@@ -33,21 +34,34 @@ const Hint = ({ children }: { children: string }) => (
 
 export default function App() {
    const [values, setValues] = useState<Values>(INITIAL_VALUES)
+   const [model, setModel] = useState<ModelKind>('xgb')
    const { loading, result, resultRef, run } = useAnalysis()
+
+   // Поля, от которых произошёл отказ (приходят с бэкенда)
+   const highlighted = new Set(
+      result?.kind === 'ok' ? result.data.highlighted_sensors : [],
+   )
 
    const setValue = (name: string, value: string) =>
       setValues((prev) => ({ ...prev, [name]: value }))
 
    const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
       event.preventDefault()
-      run(values)
+      run(values, model)
+   }
+
+   const handleModelChange = (value: string) => {
+      const next = value as ModelKind
+      setModel(next)
+      // если результат уже есть — сразу пересчитываем другой моделью для сравнения
+      if (result?.kind === 'ok') run(values, next)
    }
 
    const handleRandom = (event: MouseEvent<HTMLButtonElement>) => {
       event.currentTarget.blur()
       const sample = randomSample()
       setValues(sample)
-      run(sample)
+      run(sample, model)
    }
 
    return (
@@ -89,31 +103,60 @@ export default function App() {
                         </Select>
                      </div>
 
-                     {FIELDS.map((field) => (
-                        <div
-                           key={field.name}
-                           className={`flex flex-col gap-2 ${'full' in field ? 'sm:col-span-2' : ''}`}
-                        >
-                           <Label htmlFor={field.name}>
-                              {field.label}{' '}
-                              <span className="text-[11.5px] font-medium text-muted-foreground">
-                                 ({field.unit})
-                              </span>
-                           </Label>
-                           <Hint>{field.en}</Hint>
-                           <Input
-                              id={field.name}
-                              name={field.name}
-                              type="number"
-                              step={field.step}
-                              required
-                              value={values[field.name]}
-                              onChange={(event) =>
-                                 setValue(field.name, event.target.value)
-                              }
-                           />
-                        </div>
-                     ))}
+                     <div className="flex flex-col gap-2 sm:col-span-2">
+                        <Label htmlFor="model">Модель прогноза</Label>
+                        <Hint>Prediction model</Hint>
+                        <Select value={model} onValueChange={handleModelChange}>
+                           <SelectTrigger id="model" className="w-full">
+                              <SelectValue />
+                           </SelectTrigger>
+                           <SelectContent position="popper" sideOffset={4}>
+                              {MODEL_OPTIONS.map(({ value, label }) => (
+                                 <SelectItem key={value} value={value}>
+                                    {label}
+                                 </SelectItem>
+                              ))}
+                           </SelectContent>
+                        </Select>
+                     </div>
+
+                     {FIELDS.map((field) => {
+                        const isHot = highlighted.has(field.name)
+
+                        return (
+                           <div
+                              key={field.name}
+                              className={`flex flex-col gap-2 ${'full' in field ? 'sm:col-span-2' : ''}`}
+                           >
+                              <Label
+                                 htmlFor={field.name}
+                                 className={cn(isHot && 'text-red-400')}
+                              >
+                                 {field.label}{' '}
+                                 <span className="text-[11.5px] font-medium text-muted-foreground">
+                                    ({field.unit})
+                                 </span>
+                              </Label>
+                              <Hint>{field.en}</Hint>
+                              <Input
+                                 id={field.name}
+                                 name={field.name}
+                                 type="number"
+                                 step={field.step}
+                                 required
+                                 value={values[field.name]}
+                                 aria-invalid={isHot || undefined}
+                                 className={cn(
+                                    isHot &&
+                                       'border-red-500 ring-2 ring-red-500/30 focus-visible:ring-red-500/40',
+                                 )}
+                                 onChange={(event) =>
+                                    setValue(field.name, event.target.value)
+                                 }
+                              />
+                           </div>
+                        )
+                     })}
                   </div>
 
                   <div className="flex flex-col gap-3 pt-2 sm:flex-row">
@@ -146,9 +189,7 @@ export default function App() {
                </form>
 
                <div ref={resultRef} className="scroll-mt-6">
-                  {result?.kind === 'ok' && (
-                     <RiskResult probability={result.probability} />
-                  )}
+                  {result?.kind === 'ok' && <RiskResult data={result.data} />}
                   {result?.kind === 'error' && (
                      <ErrorResult message={result.message} />
                   )}

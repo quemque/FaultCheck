@@ -1,7 +1,7 @@
 import { serve } from 'bun'
 import index from './index.html'
 
-const BACKEND = process.env.BACKEND_URL ?? 'http://127.0.0.1:8000'
+const BACKEND = process.env.BACKEND_URL ?? 'http://127.0.0.1:8123'
 
 const server = serve({
    routes: {
