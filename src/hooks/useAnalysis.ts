@@ -1,7 +1,7 @@
 import { useCallback, useRef, useState } from 'react'
 
 import { analyze } from '@/lib/api'
-import type { Result, Values } from '../types'
+import type { ModelKind, Result, Values } from '../types'
 
 const SCROLL_DELAY_MS = 50
 const UNKNOWN_ERROR = 'Неизвестная ошибка.'
@@ -21,11 +21,11 @@ export function useAnalysis() {
    }, [])
 
    const run = useCallback(
-      async (values: Values) => {
+      async (values: Values, model: ModelKind) => {
          setLoading(true)
          try {
-            const probability = await analyze(values)
-            setResult({ kind: 'ok', probability })
+            const data = await analyze({ ...values, model })
+            setResult({ kind: 'ok', data })
             scrollToResult()
          } catch (error) {
             setResult({
