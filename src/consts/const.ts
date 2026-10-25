@@ -1,4 +1,4 @@
-import type { RiskLevel } from '@/types'
+import type { ModeKey, ModelKind, RiskLevel } from '@/types'
 import type { Values } from '../types/index'
 
 export const LEVELS: RiskLevel[] = [
@@ -66,6 +66,44 @@ export const FIELDS = [
       full: true,
    },
 ] as const
+
+/** Типы отказов, которые возвращает бэкенд (поле modes) */
+export const MODES: {
+   key: ModeKey
+   label: string
+   en: string
+   hint: string
+}[] = [
+   {
+      key: 'twf',
+      label: 'Износ инструмента',
+      en: 'Tool wear',
+      hint: 'Инструмент достиг критического износа.',
+   },
+   {
+      key: 'hdf',
+      label: 'Отвод тепла',
+      en: 'Heat dissipation',
+      hint: 'Малая разница температур при низкой скорости вращения.',
+   },
+   {
+      key: 'pwf',
+      label: 'Мощность',
+      en: 'Power',
+      hint: 'Мощность вне рабочего диапазона 3500–9000 Вт.',
+   },
+   {
+      key: 'osf',
+      label: 'Перенапряжение',
+      en: 'Overstrain',
+      hint: 'Износ × момент превышает допустимый предел для этого качества.',
+   },
+]
+
+export const MODEL_OPTIONS: { value: ModelKind; label: string }[] = [
+   { value: 'xgb', label: 'XGBoost — плавная вероятность' },
+   { value: 'tree', label: 'Дерево решений / Decision tree' },
+]
 
 export const QUALITY_OPTIONS = [
    { value: '0', label: 'L — низкое / low' },
