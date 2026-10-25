@@ -43,9 +43,17 @@ async def root():
     return {}
 
 
+def _read_artifact(name: str) -> list:
+    path = Path("artifacts") / name
+    return json.loads(path.read_text()) if path.exists() else []
+
+
 @app.get("/metrics")
 async def metrics():
-    return json.loads(Path("artifacts/metrics.json").read_text())
+    return {
+        "holdout": _read_artifact("metrics.json"),  # отложенная выборка
+        "cv": _read_artifact("cv_metrics.json"),  # кросс-валидация (mean/std)
+    }
 
 
 @app.get("/analyze")
