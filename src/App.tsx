@@ -22,6 +22,9 @@ import { RiskResult } from '@/components/RiskResult'
 import { cn } from '@/lib/utils'
 import { randomSample } from '@/lib/samples'
 import { ErrorResult } from './components/ui/Error'
+import { MetricsPage } from './pages/MetricsPage'
+import { NavLink } from './components/NavLink'
+import { usePath } from './hooks/usePath'
 
 import { FIELDS, MODEL_OPTIONS, QUALITY_OPTIONS } from './consts/const'
 import { useAnalysis } from './hooks/useAnalysis'
@@ -32,7 +35,7 @@ const Hint = ({ children }: { children: string }) => (
    <p className="-mt-1 text-xs text-muted-foreground">{children}</p>
 )
 
-export default function App() {
+function AnalysisPage() {
    const [values, setValues] = useState<Values>(INITIAL_VALUES)
    const [model, setModel] = useState<ModelKind>('xgb')
    const { loading, result, resultRef, run } = useAnalysis()
@@ -78,6 +81,12 @@ export default function App() {
                   Заполните данные, полученные от датчика оборудования, чтобы
                   оценить вероятность отказа.
                </CardDescription>
+               <NavLink
+                  to="/metrics"
+                  className="mt-1 w-fit text-[12.5px] text-muted-foreground underline-offset-4 hover:underline"
+               >
+                  Метрики моделей →
+               </NavLink>
             </CardHeader>
 
             <CardContent className="space-y-6 pt-6">
@@ -198,4 +207,9 @@ export default function App() {
          </Card>
       </main>
    )
+}
+
+export default function App() {
+   const path = usePath().replace(/\/+$/, '')
+   return path === '/metrics' ? <MetricsPage /> : <AnalysisPage />
 }
