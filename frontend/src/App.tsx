@@ -32,7 +32,7 @@ import type { ModelKind, Values } from './types'
 import { INITIAL_VALUES } from './consts/const'
 
 const Hint = ({ children }: { children: string }) => (
-   <p className="-mt-1 text-xs text-muted-foreground">{children}</p>
+   <p className="-mt-1 text-sm text-muted-foreground">{children}</p>
 )
 
 function AnalysisPage() {
@@ -40,7 +40,6 @@ function AnalysisPage() {
    const [model, setModel] = useState<ModelKind>('xgb')
    const { loading, result, resultRef, run } = useAnalysis()
 
-   // Поля, от которых произошёл отказ (приходят с бэкенда)
    const highlighted = new Set(
       result?.kind === 'ok' ? result.data.highlighted_sensors : [],
    )
@@ -56,7 +55,6 @@ function AnalysisPage() {
    const handleModelChange = (value: string) => {
       const next = value as ModelKind
       setModel(next)
-      // если результат уже есть — сразу пересчитываем другой моделью для сравнения
       if (result?.kind === 'ok') run(values, next)
    }
 
@@ -68,43 +66,52 @@ function AnalysisPage() {
    }
 
    return (
-      <main className="flex min-h-screen items-center justify-center px-5 py-8">
-         <Card className="w-full max-w-[620px] rounded-2xl shadow-sm">
+      <main className="flex min-h-screen items-center justify-center px-2 py-3 sm:px-3">
+         <Card className="w-full max-w-[1200px] rounded-2xl shadow-sm">
             <CardHeader className="border-b">
-               <CardTitle className="text-[19px] font-bold tracking-tight">
+               <CardTitle className="text-3xl font-bold tracking-tight">
                   Анализ оборудования
-                  <span className="ml-2 text-sm font-normal text-muted-foreground">
+                  <span className="ml-3 text-lg font-normal text-muted-foreground">
                      Equipment analysis
                   </span>
                </CardTitle>
-               <CardDescription className="text-[13.5px] leading-normal">
+               <CardDescription className="text-base leading-normal">
                   Заполните данные, полученные от датчика оборудования, чтобы
                   оценить вероятность отказа.
                </CardDescription>
                <NavLink
                   to="/metrics"
-                  className="mt-1 w-fit text-[12.5px] text-muted-foreground underline-offset-4 hover:underline"
+                  className="mt-1 w-fit text-base text-muted-foreground underline-offset-4 hover:underline"
                >
                   Метрики моделей →
                </NavLink>
             </CardHeader>
 
-            <CardContent className="space-y-6 pt-6">
-               <form onSubmit={handleSubmit} className="space-y-6">
-                  <div className="grid grid-cols-1 gap-[18px] sm:grid-cols-2">
+            <CardContent className="space-y-8 pt-8">
+               <form onSubmit={handleSubmit} className="space-y-8">
+                  <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                      <div className="flex flex-col gap-2 sm:col-span-2">
-                        <Label htmlFor="type">Качество продукта</Label>
+                        <Label htmlFor="type" className="text-base">
+                           Качество продукта
+                        </Label>
                         <Hint>Product quality</Hint>
                         <Select
                            value={values.type}
                            onValueChange={(value) => setValue('type', value)}
                         >
-                           <SelectTrigger id="type" className="w-full">
+                           <SelectTrigger
+                              id="type"
+                              className="h-12 w-full text-base data-[size=default]:h-12"
+                           >
                               <SelectValue />
                            </SelectTrigger>
                            <SelectContent position="popper" sideOffset={4}>
                               {QUALITY_OPTIONS.map(({ value, label }) => (
-                                 <SelectItem key={value} value={value}>
+                                 <SelectItem
+                                    key={value}
+                                    value={value}
+                                    className="text-base"
+                                 >
                                     {label}
                                  </SelectItem>
                               ))}
@@ -113,15 +120,24 @@ function AnalysisPage() {
                      </div>
 
                      <div className="flex flex-col gap-2 sm:col-span-2">
-                        <Label htmlFor="model">Модель прогноза</Label>
+                        <Label htmlFor="model" className="text-base">
+                           Модель прогноза
+                        </Label>
                         <Hint>Prediction model</Hint>
                         <Select value={model} onValueChange={handleModelChange}>
-                           <SelectTrigger id="model" className="w-full">
+                           <SelectTrigger
+                              id="model"
+                              className="h-12 w-full text-base data-[size=default]:h-12"
+                           >
                               <SelectValue />
                            </SelectTrigger>
                            <SelectContent position="popper" sideOffset={4}>
                               {MODEL_OPTIONS.map(({ value, label }) => (
-                                 <SelectItem key={value} value={value}>
+                                 <SelectItem
+                                    key={value}
+                                    value={value}
+                                    className="text-base"
+                                 >
                                     {label}
                                  </SelectItem>
                               ))}
@@ -139,10 +155,13 @@ function AnalysisPage() {
                            >
                               <Label
                                  htmlFor={field.name}
-                                 className={cn(isHot && 'text-red-400')}
+                                 className={cn(
+                                    'text-base',
+                                    isHot && 'text-red-400',
+                                 )}
                               >
                                  {field.label}{' '}
-                                 <span className="text-[11.5px] font-medium text-muted-foreground">
+                                 <span className="text-sm font-medium text-muted-foreground">
                                     ({field.unit})
                                  </span>
                               </Label>
@@ -156,6 +175,7 @@ function AnalysisPage() {
                                  value={values[field.name]}
                                  aria-invalid={isHot || undefined}
                                  className={cn(
+                                    'h-12 text-base md:text-base',
                                     isHot &&
                                        'border-red-500 ring-2 ring-red-500/30 focus-visible:ring-red-500/40',
                                  )}
@@ -173,10 +193,10 @@ function AnalysisPage() {
                         type="submit"
                         size="lg"
                         disabled={loading}
-                        className="flex-1"
+                        className="h-12 flex-1 text-base"
                      >
                         {loading && (
-                           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                           <Loader2 className="mr-2 h-5 w-5 animate-spin" />
                         )}
                         {loading
                            ? 'Расчёт...'
@@ -189,9 +209,9 @@ function AnalysisPage() {
                         size="lg"
                         disabled={loading}
                         onClick={handleRandom}
-                        className="shrink-0"
+                        className="h-12 shrink-0 text-base"
                      >
-                        <Shuffle className="mr-2 h-4 w-4" />
+                        <Shuffle className="mr-2 h-5 w-5" />
                         Случайный пример
                      </Button>
                   </div>
