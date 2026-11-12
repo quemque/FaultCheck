@@ -1,4 +1,5 @@
 """Обучение и сравнение моделей. Запуск: uv run train"""
+
 import json
 from pathlib import Path
 
@@ -31,7 +32,17 @@ KINDS = ("xgb", "tree")
 CV_FOLDS = 5
 
 # Метрики, по которым сравниваем модели в кросс-валидации
-CV_METRICS = ["pr_auc", "roc_auc", "r_precision", "mcc", "kappa", "g_mean", "f2", "precision", "recall"]
+CV_METRICS = [
+    "pr_auc",
+    "roc_auc",
+    "r_precision",
+    "mcc",
+    "kappa",
+    "g_mean",
+    "f2",
+    "precision",
+    "recall",
+]
 
 DF_SCHEMA = pl.Schema(
     {
@@ -127,7 +138,10 @@ def evaluate(y_true, proba, thr: float) -> dict:
         "mcc": matthews_corrcoef(y_true, pred),
         "kappa": cohen_kappa_score(y_true, pred),
         "threshold": thr,
-        "tn": int(tn), "fp": int(fp), "fn": int(fn), "tp": int(tp),
+        "tn": int(tn),
+        "fp": int(fp),
+        "fn": int(fn),
+        "tp": int(tp),
     }
 
 
@@ -172,7 +186,14 @@ def verdict(a: dict, b: dict, metric: str) -> str:
 def print_cv_report(summary: list[dict]) -> None:
     fmt = lambda e, m: f"{e[f'{m}_mean']:.3f}±{e[f'{m}_std']:.3f}"
     table = pl.DataFrame(
-        [{"target": e["target"], "model": e["model"], **{m: fmt(e, m) for m in CV_METRICS}} for e in summary]
+        [
+            {
+                "target": e["target"],
+                "model": e["model"],
+                **{m: fmt(e, m) for m in CV_METRICS},
+            }
+            for e in summary
+        ]
     )
     with pl.Config(tbl_rows=50, tbl_cols=20):
         print("\n=== Кросс-валидация (среднее±std по 5 фолдам) ===")
@@ -181,7 +202,9 @@ def print_cv_report(summary: list[dict]) -> None:
     print("\n=== Вердикт (ничья, если разница меньше std) ===")
     for target in TARGETS:
         a, b = [e for e in summary if e["target"] == target]
-        parts = {m: verdict(a, b, m) for m in ("pr_auc", "mcc", "kappa", "g_mean", "f2")}
+        parts = {
+            m: verdict(a, b, m) for m in ("pr_auc", "mcc", "kappa", "g_mean", "f2")
+        }
         print(f"{target:16s} " + "  ".join(f"{m}={w}" for m, w in parts.items()))
 
 
@@ -189,7 +212,9 @@ def main():
     with open("dataset.csv", encoding="utf-8-sig") as f:
         df = parse_csv(f.read())
 
-    df = df.with_columns(pl.col("type").replace_strict(TYPE_MAPPING, return_dtype=pl.Int64))
+    df = df.with_columns(
+        pl.col("type").replace_strict(TYPE_MAPPING, return_dtype=pl.Int64)
+    )
     X = to_matrix(df)
 
     idx_train, idx_test = train_test_split(
@@ -216,7 +241,21 @@ def main():
             else:
                 joblib.dump(model, ARTIFACTS / f"tree_{target}.joblib")
 
-    show = ["target", "model", "pr_auc", "r_precision", "precision", "recall", "f2", "g_mean", "mcc", "kappa", "tp", "fp", "fn"]
+    show = [
+        "target",
+        "model",
+        "pr_auc",
+        "r_precision",
+        "precision",
+        "recall",
+        "f2",
+        "g_mean",
+        "mcc",
+        "kappa",
+        "tp",
+        "fp",
+        "fn",
+    ]
     with pl.Config(tbl_rows=50, tbl_cols=20, float_precision=3):
         print("=== Отложенная выборка (20%) ===")
         print(pl.DataFrame(rows).select(show))

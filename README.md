@@ -1,26 +1,49 @@
 # FaultCheck
-Скачать репозиторий 
+
+# Скачать репозиторий
+
 ```bash
 git clone https://github.com/quemque/FaultCheck
 ```
+
 # backend
+
 ```bash
-cd faultcheck
+cd backend
 ```
-## установить зависимости
+
+## Установка зависимостей
+
 ```bash
 uv sync
 ```
-## Обучение моделей и поднятие fastapi
+
+## Обучение моделей
+
 ```bash
 uv run train
-
 ```
+
+## Запуск fastapi
+
 ```bash
 uv run serve
 ```
-## frontend
-* в корне проекта
+
+# frontend
+
+```bash
+cd frontend
+```
+
+## Установка зависимостей
+
+```bash
+bun i
+```
+
+## Запуск проекта(dev)
+
 ```bash
 bun run dev
 ```
